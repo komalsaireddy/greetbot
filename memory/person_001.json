@@ -1,0 +1,15 @@
+{
+    "id": "person_001",
+    "name": null,
+    "age": null,
+    "college": null,
+    "profession": null,
+    "city": null,
+    "hobbies": [],
+    "pets": [],
+    "preferences": {},
+    "conversation_summary": [],
+    "visit_count": 1,
+    "first_seen": "2026-07-19T15:52:26.776179",
+    "last_seen": "2026-07-19T15:52:26.776199"
+}
