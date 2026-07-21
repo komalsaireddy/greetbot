@@ -1,0 +1,99 @@
+=========================================================
+GreetBot - Raspberry Pi 5 Installation & Setup Guide
+=========================================================
+
+Run these commands in your Raspberry Pi 5 terminal to install all
+necessary dependencies for GreetBot (Audio, Video, AI, Servos).
+
+---------------------------------------------------------
+1. SYSTEM PACKAGES
+---------------------------------------------------------
+Update system and install required apt packages for OpenCV, Audio, and Python.
+
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y build-essential cmake pkg-config
+sudo apt install -y libjpeg-dev libtiff5-dev libjasper-dev libpng-dev
+sudo apt install -y libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
+sudo apt install -y libxvidcore-dev libx264-dev
+sudo apt install -y libfontconfig1-dev libcairo2-dev
+sudo apt install -y libgdk-pixbuf2.0-dev libpango1.0-dev
+sudo apt install -y libgtk2.0-dev libgtk-3-dev
+sudo apt install -y libatlas-base-dev gfortran
+sudo apt install -y libhdf5-dev libhdf5-serial-dev libhdf5-103
+sudo apt install -y libqtgui4 libqtwebkit4 libqt4-test python3-pyqt5
+sudo apt install -y portaudio19-dev libportaudio2 libportaudiocpp0
+sudo apt install -y mpg123 alsa-utils
+sudo apt install -y python3-dev python3-venv python3-pip
+
+---------------------------------------------------------
+2. PIPER TTS (Local Text-to-Speech)
+---------------------------------------------------------
+Download and extract Piper TTS binary for ARM64 (Raspberry Pi 5).
+
+wget https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz
+tar -zxvf piper_arm64.tar.gz
+sudo mv piper /usr/local/bin/
+rm piper_arm64.tar.gz
+
+# Download a fast local voice model (e.g. English US Ryan - Medium)
+mkdir -p models
+wget -O models/en_US-ryan-medium.onnx "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/ryan/medium/en_US-ryan-medium.onnx?download=true"
+wget -O models/en_US-ryan-medium.onnx.json "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/ryan/medium/en_US-ryan-medium.onnx.json?download=true"
+
+---------------------------------------------------------
+3. PYTHON VIRTUAL ENVIRONMENT
+---------------------------------------------------------
+Create and activate a virtual environment.
+
+python3 -m venv greetbot_env
+source greetbot_env/bin/activate
+
+---------------------------------------------------------
+4. PYTHON DEPENDENCIES
+---------------------------------------------------------
+Install heavy Python libraries (NumPy, OpenCV, PyTorch, Whisper).
+
+pip install wheel setuptools
+pip install --upgrade pip
+
+# Install PyTorch for ARM (CPU only, Raspberry Pi)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# Install dlib and face_recognition (This takes a LONG time on Pi!)
+pip install cmake
+pip install dlib
+pip install face_recognition
+
+# Install OpenAI Whisper
+pip install openai-whisper
+
+# Install remaining dependencies from requirements.txt
+pip install -r requirements.txt
+
+# Install RPi.GPIO (For Servo Control)
+pip install RPi.GPIO
+
+---------------------------------------------------------
+5. ENVIRONMENT CONFIGURATION
+---------------------------------------------------------
+Create your .env file with your API keys.
+
+cp .env.example .env
+nano .env
+
+# -> Add your GROQ_API_KEY inside the .env file.
+# -> If using weather, add WEATHER_API_KEY.
+
+---------------------------------------------------------
+6. RUNNING GREETBOT
+---------------------------------------------------------
+Ensure you are in the virtual environment, then start GreetBot!
+
+source greetbot_env/bin/activate
+python main.py
+
+# To run without the Pygame avatar UI (console only)
+python main.py --no-avatar
+
+# To run with vision debugging windows
+python main.py --debug

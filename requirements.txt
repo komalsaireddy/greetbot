@@ -1,8 +1,33 @@
+# GreetBot Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core
 groq
 python-dotenv
-pygame
 numpy
 pillow
 requests
 aiohttp
+
+# Computer Vision
+opencv-python
+face_recognition
+dlib
+
+# Speech Recognition
+openai-whisper
+sounddevice
+soundfile
+webrtcvad
+
+# Text-to-Speech
+edge-tts
+
+# Avatar / Display
+pygame
+
+# System Monitoring
 psutil
+
+# Utilities
+scipy
