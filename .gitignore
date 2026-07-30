@@ -1,4 +1,5 @@
 venv/
+.venv/
 __pycache__/
 *.pyc
 *.pyo
@@ -6,5 +7,10 @@ __pycache__/
 logs/
 .env
 *.log
+.pytest_cache/
+database/*.db
+database/*.db-*
+memory/*.json
+vision/faces/
 .vscode/
 .DS_Store

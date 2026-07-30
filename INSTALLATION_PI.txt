@@ -35,10 +35,10 @@ tar -zxvf piper_arm64.tar.gz
 sudo mv piper /usr/local/bin/
 rm piper_arm64.tar.gz
 
-# Download a fast local voice model (e.g. English US Ryan - Medium)
-mkdir -p models
-wget -O models/en_US-ryan-medium.onnx "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/ryan/medium/en_US-ryan-medium.onnx?download=true"
-wget -O models/en_US-ryan-medium.onnx.json "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/ryan/medium/en_US-ryan-medium.onnx.json?download=true"
+# Download the voice model to the location GreetBot uses by default.
+mkdir -p assets/voices
+wget -O assets/voices/en_US-lessac-medium.onnx "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/medium/en_US-lessac-medium.onnx?download=true"
+wget -O assets/voices/en_US-lessac-medium.onnx.json "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json?download=true"
 
 ---------------------------------------------------------
 3. PYTHON VIRTUAL ENVIRONMENT
@@ -90,10 +90,13 @@ nano .env
 Ensure you are in the virtual environment, then start GreetBot!
 
 source greetbot_env/bin/activate
-python main.py
+python3 main.py
 
 # To run without the Pygame avatar UI (console only)
-python main.py --no-avatar
+python3 main.py --no-avatar
 
 # To run with vision debugging windows
-python main.py --debug
+python3 main.py --debug
+
+For a first Pi run, keep the default 640x480 camera resolution. If speech
+recognition feels slow, set STT_MODEL=tiny in .env before starting.

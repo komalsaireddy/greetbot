@@ -1,12 +1,18 @@
 import os
+import re
 import cv2
 import numpy as np
 import face_recognition
 
+from config import FACE_RECOGNITION_SCALE, FACE_RECOGNITION_THRESHOLD, VISION_FACES_DIR
+from utils.logger import get_logger
+
+log = get_logger(__name__)
+
 
 class FaceRecognition:
 
-    def __init__(self, faces_dir="vision/faces"):
+    def __init__(self, faces_dir: str = str(VISION_FACES_DIR)):
 
         self.faces_dir = faces_dir
 
@@ -22,7 +28,7 @@ class FaceRecognition:
         self.known_encodings.clear()
         self.known_names.clear()
 
-        print("\nLoading known faces...")
+        log.info("Loading known faces...")
 
         for item in sorted(os.listdir(self.faces_dir)):
 
@@ -50,7 +56,7 @@ class FaceRecognition:
                     self.known_encodings.append(encodings[0])
                     self.known_names.append(person_name)
 
-                print(f"Loaded: {person_name}")
+                log.info("Loaded face samples for: %s", person_name)
 
             else:
 
@@ -62,18 +68,22 @@ class FaceRecognition:
                 encodings = face_recognition.face_encodings(image)
 
                 if len(encodings) == 0:
-                    print(f"Skipped {item} (no face detected)")
+                    log.warning("Skipped %s (no face detected)", item)
                     continue
 
                 self.known_encodings.append(encodings[0])
 
                 name = os.path.splitext(item)[0]
+                # Legacy flat samples such as Komal.jpg and Komal2.jpg are
+                # samples of the same person.  New registrations use folders.
+                if not name.startswith("person_"):
+                    name = re.sub(r"_?\\d+$", "", name)
 
                 self.known_names.append(name)
 
-                print(f"Loaded: {name}")
+                log.info("Loaded: %s", name)
 
-        print(f"\nTotal Face Encodings Loaded: {len(self.known_encodings)}")
+        log.info("Total face encodings loaded: %d", len(self.known_encodings))
 
     def reload(self):
 
@@ -81,7 +91,14 @@ class FaceRecognition:
 
     def recognize(self, frame):
 
+        scale = FACE_RECOGNITION_SCALE
+        if not 0 < scale <= 1:
+            log.warning("Invalid FACE_RECOGNITION_SCALE=%s; using full frame", scale)
+            scale = 1.0
+
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        if scale != 1.0:
+            rgb = cv2.resize(rgb, (0, 0), fx=scale, fy=scale)
 
         locations = face_recognition.face_locations(
             rgb,
@@ -109,13 +126,18 @@ class FaceRecognition:
 
                 best = np.argmin(distances)
 
-                if distances[best] < 0.48:
+                if distances[best] < FACE_RECOGNITION_THRESHOLD:
 
                     name = self.known_names[best]
 
                     confidence = (1 - distances[best]) * 100
 
             top, right, bottom, left = location
+            if scale != 1.0:
+                top = round(top / scale)
+                right = round(right / scale)
+                bottom = round(bottom / scale)
+                left = round(left / scale)
 
             faces.append({
 

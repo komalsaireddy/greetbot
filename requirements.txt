@@ -4,6 +4,7 @@
 # Core
 groq
 python-dotenv
+setuptools<82  # face_recognition_models still imports pkg_resources
 numpy
 pillow
 requests

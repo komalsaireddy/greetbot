@@ -39,9 +39,9 @@ VERSION: str = "2.0"
 # AI MODEL
 # ==========================
 
-LLM_MODEL: str = "llama-3.3-70b-versatile"
-LLM_MAX_TOKENS: int = 512
-LLM_TEMPERATURE: float = 0.7
+LLM_MODEL: str = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
+LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "256"))
+LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.7"))
 
 # ==========================
 # CAMERA
@@ -49,13 +49,14 @@ LLM_TEMPERATURE: float = 0.7
 
 # Camera device index (0 = default, 1 = external USB cam)
 CAMERA_INDEX: int = int(os.getenv("CAMERA_INDEX", "0"))
+CAMERA_ENABLED: bool = os.getenv("CAMERA_ENABLED", "true").lower() == "true"
 
 # How many frames to skip between full face-recognition passes (reduces CPU)
-CAMERA_RECOGNITION_SKIP: int = 3
+CAMERA_RECOGNITION_SKIP: int = int(os.getenv("CAMERA_RECOGNITION_SKIP", "3"))
 
 # Camera resolution
-CAMERA_WIDTH: int = 1280
-CAMERA_HEIGHT: int = 720
+CAMERA_WIDTH: int = int(os.getenv("CAMERA_WIDTH", "640"))
+CAMERA_HEIGHT: int = int(os.getenv("CAMERA_HEIGHT", "480"))
 
 # ==========================
 # AUDIO
@@ -65,7 +66,12 @@ SAMPLE_RATE: int = 16000
 CHANNELS: int = 1
 
 # Whisper model size: tiny, base, small, medium, large
-STT_MODEL: str = "base"
+STT_MODEL: str = os.getenv("STT_MODEL", "base")
+
+# Voice activity detection safeguards.  A value of 0 disables the limit.
+LISTEN_TIMEOUT_SECONDS: float = float(os.getenv("LISTEN_TIMEOUT_SECONDS", "20"))
+MAX_RECORDING_SECONDS: float = float(os.getenv("MAX_RECORDING_SECONDS", "12"))
+AUDIO_QUEUE_MAX_FRAMES: int = int(os.getenv("AUDIO_QUEUE_MAX_FRAMES", "200"))
 
 # TTS engine: "edge" (online, better quality) or "piper" (offline, local)
 TTS_ENGINE: str = os.getenv("TTS_ENGINE", "edge")
@@ -113,7 +119,11 @@ VOICES_DIR: Path = ASSETS_DIR / "voices"
 # ==========================
 
 # Face recognition confidence threshold (lower = stricter)
-FACE_RECOGNITION_THRESHOLD: float = 0.48
+FACE_RECOGNITION_THRESHOLD: float = float(os.getenv("FACE_RECOGNITION_THRESHOLD", "0.48"))
+
+# dlib face encoding is CPU-heavy.  A quarter-size frame is a good Pi 5
+# starting point; boxes are scaled back to the camera's original resolution.
+FACE_RECOGNITION_SCALE: float = float(os.getenv("FACE_RECOGNITION_SCALE", "0.25"))
 
 # Face dir inside vision module (for backward compat)
 VISION_FACES_DIR: Path = BASE_DIR / "vision" / "faces"

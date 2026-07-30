@@ -203,6 +203,39 @@ class LLM:
         """Close the conversation session for a person who left."""
         self._conversation_mgr.end_session(person_id)
 
+    def describe_vision(self, base64_image: str, user_text: str) -> str:
+        """
+        Query the Llama 3 Vision model with an image.
+        """
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": user_text},
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{base64_image}",
+                        },
+                    },
+                ],
+            }
+        ]
+        
+        try:
+            response = self._client.chat.completions.create(
+                model="llama-3.2-11b-vision-preview",
+                messages=messages,
+                max_tokens=LLM_MAX_TOKENS,
+                temperature=LLM_TEMPERATURE,
+            )
+            reply = response.choices[0].message.content or ""
+            log.info(f"Vision reply: {reply[:60]}...")
+            return clean_text(reply)
+        except Exception as exc:
+            log.error(f"Groq Vision API error: {exc}")
+            return "I couldn't process the image right now."
+
     @property
     def current_emotion(self) -> str:
         """Currently active personality emotion."""

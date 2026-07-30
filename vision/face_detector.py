@@ -15,10 +15,11 @@ from utils.logger import get_logger
 
 log = get_logger(__name__)
 
-# Path to the OpenCV Haar cascade XML (bundled with opencv)
-_CASCADE_PATH = (
-    Path(cv2.__file__).parent / "data" / "haarcascade_frontalface_default.xml"
-)
+# Path to the OpenCV Haar cascade XML.  Some recent OpenCV wheels no longer
+# bundle it; in that case this class deliberately becomes a pass-through.
+_CASCADE_PATH = Path(
+    getattr(getattr(cv2, "data", None), "haarcascades", "")
+) / "haarcascade_frontalface_default.xml"
 
 
 class FaceDetector:
@@ -70,6 +71,10 @@ class FaceDetector:
         bool
             True if one or more faces are detected.
         """
+        # The pre-filter is an optimization only.  Returning False when its
+        # optional cascade is unavailable would disable all face recognition.
+        if self._cascade is None:
+            return True
         return len(self.detect(frame)) > 0
 
     def detect(self, frame: np.ndarray) -> list[dict]:

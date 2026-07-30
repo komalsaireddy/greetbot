@@ -29,6 +29,7 @@ def check_dependencies() -> None:
 def main():
     parser = argparse.ArgumentParser(description="Start GreetBot AI Assistant")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode (shows vision window)")
+    parser.add_argument("--no-camera", action="store_true", help="Disable the camera")
     parser.add_argument("--no-avatar", action="store_true", help="Disable the Pygame avatar UI")
     parser.add_argument("--servo", action="store_true", help="Enable hardware servo motors (Raspberry Pi only)")
     args = parser.parse_args()
@@ -42,6 +43,10 @@ def main():
         config.DEBUG = True
         log.info("Debug mode enabled.")
     
+    if args.no_camera:
+        config.CAMERA_ENABLED = False
+        log.info("Camera disabled.")
+        
     if args.no_avatar:
         config.AVATAR_ENABLED = False
         log.info("Avatar UI disabled.")

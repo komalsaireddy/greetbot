@@ -5,9 +5,8 @@ def main():
 
     robot = AssistantController()
 
-    robot.run()
+    robot.start()
 
 
 if __name__ == "__main__":
     main()
-
