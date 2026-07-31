@@ -43,6 +43,10 @@ LLM_MODEL: str = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
 LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "256"))
 LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.7"))
 
+USE_OLLAMA: bool = os.getenv("USE_OLLAMA", "false").lower() == "true"
+OLLAMA_URL: str = os.getenv("OLLAMA_URL", "http://localhost:11434/api/chat")
+OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3")
+
 # ==========================
 # CAMERA
 # ==========================

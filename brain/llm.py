@@ -8,9 +8,13 @@ personality, prompt building, conversation management, and emotion detection.
 import time
 from typing import Optional
 
+import requests
 from groq import Groq, RateLimitError, APIError
 
-from config import GROQ_API_KEY, LLM_MODEL, LLM_MAX_TOKENS, LLM_TEMPERATURE
+from config import (
+    GROQ_API_KEY, LLM_MODEL, LLM_MAX_TOKENS, LLM_TEMPERATURE,
+    USE_OLLAMA, OLLAMA_URL, OLLAMA_MODEL
+)
 from brain.personality import PersonalityEngine
 from brain.prompt import PromptBuilder
 from brain.emotion import EmotionDetector, Emotion
@@ -38,10 +42,11 @@ class LLM:
     """
 
     def __init__(self, db: Optional[Database] = None) -> None:
-        if not GROQ_API_KEY:
+        if not USE_OLLAMA and not GROQ_API_KEY:
             log.warning("GROQ_API_KEY is not set — LLM calls will fail!")
 
-        self._client = Groq(api_key=GROQ_API_KEY)
+        if not USE_OLLAMA:
+            self._client = Groq(api_key=GROQ_API_KEY)
         self._db = db or Database()
 
         self._personality = PersonalityEngine()
@@ -50,7 +55,8 @@ class LLM:
         self._conversation_mgr = ConversationManager(db=self._db)
         self._global_memory = Memory(db=self._db)
 
-        log.info(f"LLM ready (model={LLM_MODEL})")
+        mode = f"Ollama ({OLLAMA_MODEL})" if USE_OLLAMA else f"Groq ({LLM_MODEL})"
+        log.info(f"LLM ready (mode={mode})")
 
     # ── Public API ────────────────────────────────────────────────────────────
 
@@ -123,8 +129,8 @@ class LLM:
         # Add the current user message
         messages.append({"role": "user", "content": user_text})
 
-        # ── Call Groq ─────────────────────────────────────────────────────────
-        reply = self._call_groq(messages)
+        # ── Call LLM ──────────────────────────────────────────────────────────
+        reply = self._call_llm(messages)
 
         # ── Auto-extract and store facts ──────────────────────────────────────
         if session:
@@ -180,7 +186,7 @@ class LLM:
             {"role": "user", "content": prompt},
         ]
 
-        return clean_text(self._call_groq(messages))
+        return clean_text(self._call_llm(messages))
 
     def generate_registration_message(self) -> str:
         """
@@ -197,7 +203,7 @@ class LLM:
             {"role": "system", "content": system},
             {"role": "user", "content": prompt},
         ]
-        return clean_text(self._call_groq(messages))
+        return clean_text(self._call_llm(messages))
 
     def end_person_session(self, person_id: str) -> None:
         """Close the conversation session for a person who left."""
@@ -223,15 +229,26 @@ class LLM:
         ]
         
         try:
-            response = self._client.chat.completions.create(
-                model="llama-3.2-11b-vision-preview",
-                messages=messages,
-                max_tokens=LLM_MAX_TOKENS,
-                temperature=LLM_TEMPERATURE,
-            )
-            reply = response.choices[0].message.content or ""
-            log.info(f"Vision reply: {reply[:60]}...")
-            return clean_text(reply)
+            if USE_OLLAMA:
+                # Format image for Ollama (it accepts base64 strings in the 'images' array of the message)
+                ollama_messages = [
+                    {
+                        "role": "user",
+                        "content": user_text,
+                        "images": [base64_image]
+                    }
+                ]
+                return self._call_ollama(ollama_messages, model="llava")
+            else:
+                response = self._client.chat.completions.create(
+                    model="llama-3.2-11b-vision-preview",
+                    messages=messages,
+                    max_tokens=LLM_MAX_TOKENS,
+                    temperature=LLM_TEMPERATURE,
+                )
+                reply = response.choices[0].message.content or ""
+                log.info(f"Vision reply: {reply[:60]}...")
+                return clean_text(reply)
         except Exception as exc:
             log.error(f"Groq Vision API error: {exc}")
             return "I couldn't process the image right now."
@@ -242,6 +259,39 @@ class LLM:
         return self._personality.current_emotion
 
     # ── Internal ──────────────────────────────────────────────────────────────
+
+    def _call_llm(
+        self,
+        messages: list[dict],
+        retries: int = 2,
+    ) -> str:
+        """
+        Send messages to either Groq or Ollama depending on configuration.
+        """
+        if USE_OLLAMA:
+            return self._call_ollama(messages)
+        else:
+            return self._call_groq(messages, retries)
+
+    def _call_ollama(self, messages: list[dict], model: Optional[str] = None) -> str:
+        """Call local Ollama API."""
+        try:
+            payload = {
+                "model": model or OLLAMA_MODEL,
+                "messages": messages,
+                "stream": False,
+                "options": {
+                    "temperature": LLM_TEMPERATURE,
+                    "num_predict": LLM_MAX_TOKENS,
+                }
+            }
+            resp = requests.post(OLLAMA_URL, json=payload, timeout=30)
+            resp.raise_for_status()
+            data = resp.json()
+            return data.get("message", {}).get("content", "")
+        except requests.exceptions.RequestException as e:
+            log.error(f"Ollama API error: {e}")
+            return "I couldn't reach my local offline brain. Make sure Ollama is running."
 
     def _call_groq(
         self,

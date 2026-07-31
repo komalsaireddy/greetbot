@@ -32,6 +32,7 @@ def main():
     parser.add_argument("--no-camera", action="store_true", help="Disable the camera")
     parser.add_argument("--no-avatar", action="store_true", help="Disable the Pygame avatar UI")
     parser.add_argument("--servo", action="store_true", help="Enable hardware servo motors (Raspberry Pi only)")
+    parser.add_argument("--ollama", action="store_true", help="Use local Ollama instead of Groq LLM")
     args = parser.parse_args()
 
     # Load environment variables
@@ -43,6 +44,10 @@ def main():
         config.DEBUG = True
         log.info("Debug mode enabled.")
     
+    if args.ollama:
+        config.USE_OLLAMA = True
+        log.info("Ollama local LLM enabled.")
+
     if args.no_camera:
         config.CAMERA_ENABLED = False
         log.info("Camera disabled.")
