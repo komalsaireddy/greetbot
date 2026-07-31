@@ -112,6 +112,9 @@ class LongTermMemory:
         session_id:
             Optional session grouping key.
         """
+        if self.person_id.startswith("unknown_"):
+            return
+            
         self._db.add_conversation_turn(
             self.person_id, role, content, session_id
         )

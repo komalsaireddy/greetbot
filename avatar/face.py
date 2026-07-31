@@ -10,6 +10,7 @@ import time
 import random
 import numpy as np
 from typing import Optional
+import pygame
 
 from utils.logger import get_logger
 from brain.emotion import Emotion
@@ -108,18 +109,15 @@ class AvatarFace:
     # ── Graphics Engine ────────────────────────────────────────────
 
     def _update_blink_clock(self):
-        import pygame
         now = pygame.time.get_ticks()
         if now > self._blink_state["next_blink_at"] and now > self._blink_state["blinking_until"]:
             self._blink_state["blinking_until"] = now + 120
             self._blink_state["next_blink_at"] = now + random.randint(2500, 6000)
 
     def _is_blinking(self):
-        import pygame
         return pygame.time.get_ticks() < self._blink_state["blinking_until"]
 
     def _update_emotion_transition(self):
-        import pygame
         now = pygame.time.get_ticks()
         target = self._emotion
         if target != self._emotion_transition["current"]:
@@ -128,12 +126,10 @@ class AvatarFace:
             self._emotion_transition["start"] = now
 
     def _get_transition_progress(self):
-        import pygame
         elapsed = pygame.time.get_ticks() - self._emotion_transition["start"]
         return min(1.0, elapsed / self._emotion_transition["duration"])
 
     def _get_blended_eye_surface(self, side):
-        import pygame
         progress = self._get_transition_progress()
         to_emotion = self._emotion_transition["current"]
         from_emotion = self._emotion_transition["previous"]
@@ -152,7 +148,6 @@ class AvatarFace:
         return blended
 
     def _get_high_res_eye_surface(self, emotion, side):
-        import pygame
         surf = pygame.Surface((160, 140), pygame.SRCALPHA)
         surf.fill((0, 0, 0, 0))
         eye_color = (0, 210, 255)
@@ -269,7 +264,6 @@ class AvatarFace:
         return surf
 
     def _draw_led_grid(self, dest_screen, src_surf, cx, cy, grid_spacing=4):
-        import pygame
         w, h = src_surf.get_size()
         grid_w = w // grid_spacing
         grid_h = h // grid_spacing
@@ -297,7 +291,6 @@ class AvatarFace:
                     pygame.draw.circle(dest_screen, core_color, (px, py), grid_spacing * 0.38)
 
     def _draw_glowing_mouth(self, screen, cx, cy, emotion, talking=False):
-        import pygame
         color = (130, 240, 255)
         glow_color = (0, 80, 180)
 
@@ -328,7 +321,6 @@ class AvatarFace:
             pygame.draw.line(screen, color, (cx - 18, cy), (cx + 18, cy), 4)
 
     def _draw_visor_scanlines(self, screen, width, visor_h):
-        import pygame
         for y in range(0, visor_h, 4):
             pygame.draw.line(screen, (12, 16, 32), (0, y), (width, y), 1)
 
@@ -336,8 +328,7 @@ class AvatarFace:
 
     def _run(self) -> None:
         try:
-            import pygame
-
+    
             pygame.init()
             pygame.display.set_caption(self._title)
             screen = pygame.display.set_mode((self._width, self._height))
@@ -410,7 +401,6 @@ class AvatarFace:
             log.error(f"Avatar error: {exc}", exc_info=True)
         finally:
             try:
-                import pygame as pg
-                pg.quit()
+                pygame.quit()
             except Exception:
                 pass

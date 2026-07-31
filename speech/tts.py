@@ -10,6 +10,7 @@ The ``create_tts()`` factory selects the appropriate engine automatically.
 
 import asyncio
 import os
+import sys
 import subprocess
 import tempfile
 import threading
@@ -60,23 +61,31 @@ class BaseTTS(ABC):
         """Play an audio file using mpg123 or aplay depending on format."""
         ext = os.path.splitext(filename)[1].lower()
 
-        if ext == ".mp3":
-            cmd = ["mpg123", "-q", filename]
-        elif ext in (".wav", ".ogg"):
-            cmd = ["aplay", filename]
+        if sys.platform == "darwin":
+            cmd = ["afplay", filename]
         else:
-            cmd = ["mpg123", "-q", filename]
+            if ext == ".mp3":
+                cmd = ["mpg123", "-q", filename]
+            elif ext in (".wav", ".ogg"):
+                cmd = ["aplay", filename]
+            else:
+                cmd = ["mpg123", "-q", filename]
 
-        with self._lock:
-            self._player = subprocess.Popen(
-                cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        self._player.wait()
-
-        with self._lock:
-            self._player = None
+        try:
+            with self._lock:
+                self._player = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            self._player.wait()
+        except FileNotFoundError:
+            log.error(f"Audio player not found. Install {'afplay' if sys.platform == 'darwin' else 'mpg123/aplay'}.")
+        except Exception as e:
+            log.error(f"Audio playback error: {e}")
+        finally:
+            with self._lock:
+                self._player = None
 
         try:
             os.remove(filename)
@@ -140,12 +149,18 @@ class EdgeTTS(BaseTTS):
             asyncio.run(self._generate(clean, filename))
             self._play_file(filename)
         except Exception as exc:
-            log.error(f"EdgeTTS error: {exc}", exc_info=True)
-            # Cleanup on failure
+            log.error(f"TTS failed: {exc}", exc_info=True)
             try:
                 os.remove(filename)
             except Exception:
                 pass
+            
+            # Fallback for when network fails
+            log.info("Falling back to offline TTS...")
+            if sys.platform == "darwin":
+                os.system(f'say "{clean}"')
+            else:
+                os.system(f'espeak "{clean}"')
 
 
 # ── Piper TTS (Offline) ───────────────────────────────────────────────────────
