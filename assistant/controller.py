@@ -456,14 +456,16 @@ class AssistantController:
                             "bottom": primary.bottom,
                         },
                     )
-                    # Send Telegram alert for unknown visitor (throttled)
-                    alert_frame = frame.copy()
-                    threading.Thread(
-                        target=lambda f=alert_frame: send_photo_frame(
-                            f, caption="🚨 Unknown visitor detected at GreetBot!"
-                        ),
-                        daemon=True,
-                    ).start()
+                    if getattr(self, "_telegram_alert_sent_for", None) != primary.track_id:
+                        self._telegram_alert_sent_for = primary.track_id
+                        # Send Telegram alert for unknown visitor (throttled)
+                        alert_frame = frame.copy()
+                        threading.Thread(
+                            target=lambda f=alert_frame: send_photo_frame(
+                                f, caption="🚨 Unknown visitor detected at GreetBot!"
+                            ),
+                            daemon=True,
+                        ).start()
 
                 self._handle_presence(primary.name, primary.track_id)
             else:
