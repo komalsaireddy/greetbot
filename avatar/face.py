@@ -360,7 +360,7 @@ class AvatarFace:
                         elif event.key == pygame.K_f:
                             self._is_fullscreen = not self._is_fullscreen
                             if self._is_fullscreen:
-                                screen = pygame.display.set_mode((self._width, self._height), pygame.FULLSCREEN)
+                                screen = pygame.display.set_mode((self._width, self._height), pygame.FULLSCREEN | pygame.SCALED)
                             else:
                                 screen = pygame.display.set_mode((self._width, self._height))
 

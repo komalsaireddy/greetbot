@@ -73,8 +73,8 @@ CAMERA_HEIGHT: int = int(os.getenv("CAMERA_HEIGHT", "480"))
 SAMPLE_RATE: int = 16000
 CHANNELS: int = 1
 
-# Whisper model size: tiny, base, small, medium, large
-STT_MODEL: str = os.getenv("STT_MODEL", "base")
+# Whisper model size: tiny.en, base, small, medium, large
+STT_MODEL: str = os.getenv("STT_MODEL", "tiny.en")
 
 # Voice activity detection safeguards.  A value of 0 disables the limit.
 LISTEN_TIMEOUT_SECONDS: float = float(os.getenv("LISTEN_TIMEOUT_SECONDS", "20"))

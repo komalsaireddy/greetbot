@@ -212,7 +212,9 @@ class AssistantController:
                 if not text:
                     continue
 
-                log.info(f"User said: {text}")
+                log.info(f"STT: {text}")
+                # Print clearly to the terminal for the user
+                print(f"\n\033[1;36m🗣️  [USER]: {text}\033[0m")
 
                 if self._check_exit_commands(text):
                     self.running = False
@@ -364,6 +366,12 @@ class AssistantController:
         """Synthesize and play speech, updating avatar states."""
         if not text:
             return
+
+        # Print clearly to the terminal for the user
+        print(f"\n\033[1;32m🤖 [GREETBOT]: {text}\033[0m\n")
+        
+        # Also log it for debugging
+        log.info(f"TTS: {text}")
 
         # One audio device can play only one response at a time.  The lock
         # prevents a greeting and a conversational answer from overlapping.
