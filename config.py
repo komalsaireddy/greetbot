@@ -28,6 +28,10 @@ GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
 WEATHER_API_KEY: str = os.getenv("WEATHER_API_KEY", "")
 WEATHER_CITY: str = os.getenv("WEATHER_CITY", "Hyderabad")
 
+# Telegram Bot API (for visitor alerts and file sharing)
+TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID: str = os.getenv("TELEGRAM_CHAT_ID", "")
+
 # ==========================
 # ROBOT IDENTITY
 # ==========================

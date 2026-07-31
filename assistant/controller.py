@@ -34,6 +34,10 @@ from skills.weather import is_weather_query, extract_city, get_weather, format_w
 from skills.search import is_search_query, extract_search_query, search, format_search_result
 from skills.wikipedia_skill import is_wikipedia_query, extract_wikipedia_query, search_wikipedia, format_wikipedia_result
 from skills.vision import is_vision_query
+from skills.telegram_bot import (
+    is_file_send_query, extract_file_query, find_file,
+    send_file, send_photo_frame, send_message
+)
 
 # Avatar
 from avatar.face import AvatarFace
@@ -91,6 +95,7 @@ class AssistantController:
         self._tts_lock = threading.Lock()
         self._face_recognition_lock = threading.Lock()
         self._pending_unknown: Optional[tuple[object, dict]] = None
+        self._telegram_alert_sent_for: Optional[str] = None  # track_id of last alerted face
 
         # Current primary person (the closest or most central face)
         self.current_person_name: str = ""
@@ -281,6 +286,23 @@ class AssistantController:
             else:
                 log.info(f"Wikipedia search for {query!r} failed, falling back to LLM.")
 
+        # 3.7. Telegram File Send Skill
+        if is_file_send_query(text):
+            file_query = extract_file_query(text)
+            self._speak(f"Let me look for that file. One moment.")
+            found = find_file(file_query)
+            if found:
+                import threading
+                threading.Thread(
+                    target=lambda: send_file(found),
+                    daemon=True
+                ).start()
+                import os
+                self._speak(f"Found it! Sending {os.path.basename(found)} to Telegram now.")
+            else:
+                self._speak(f"I couldn't find a file matching '{file_query}'. Try saying the exact filename.")
+            return
+
         # 4. Fallback to Brain (LLM)
         reply = self.brain.ask(
             user_text=text,
@@ -426,6 +448,14 @@ class AssistantController:
                             "bottom": primary.bottom,
                         },
                     )
+                    # Send Telegram alert for unknown visitor (throttled)
+                    alert_frame = frame.copy()
+                    threading.Thread(
+                        target=lambda f=alert_frame: send_photo_frame(
+                            f, caption="🚨 Unknown visitor detected at GreetBot!"
+                        ),
+                        daemon=True,
+                    ).start()
 
                 self._handle_presence(primary.name, primary.track_id)
             else:
