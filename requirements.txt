@@ -32,3 +32,5 @@ psutil
 
 # Utilities
 scipy
+openwakeword
+wikipedia
