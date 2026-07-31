@@ -46,6 +46,7 @@ class AvatarFace:
         self._status_text: str = "Initializing..."
         self._person_name: str = ""
         self._running: bool = False
+        self._is_fullscreen: bool = False
 
         self._gaze_x: float = 0.0
         self._gaze_y: float = 0.0
@@ -356,6 +357,12 @@ class AvatarFace:
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
                             self._running = False
+                        elif event.key == pygame.K_f:
+                            self._is_fullscreen = not self._is_fullscreen
+                            if self._is_fullscreen:
+                                screen = pygame.display.set_mode((self._width, self._height), pygame.FULLSCREEN)
+                            else:
+                                screen = pygame.display.set_mode((self._width, self._height))
 
                 # Visor background
                 screen.fill(BG_COLOR)
